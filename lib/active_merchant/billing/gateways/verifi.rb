@@ -103,7 +103,8 @@ module ActiveMerchant #:nodoc:
         add_customer_data(post, options)
         add_invoice_data(post, options)
         add_optional_data(post, options)
-        commit(trx_type, money, post)  
+        add_merchant_defined_data(post, options)
+        commit(trx_type, money, post)
       end
 
       def capture_void_or_refund_template(trx_type, money, authorization, options)
@@ -178,7 +179,16 @@ module ActiveMerchant #:nodoc:
         post[:xid]                = options[:xid]                
         post[:customer_receipt]   = options[:customer_receipt]
       end
-                       
+      
+      def add_merchant_defined_data(post, options)
+        # add the mercant_defined_fields
+        (1..20).each do |num|
+          unless options[('merchant_defined_field_' + num.to_s).to_sym].nil?
+            post[('merchant_defined_field_' + num.to_s).to_sym] = options[('merchant_defined_field_' + num.to_s).to_sym]
+          end
+        end
+      end
+      
       def add_security_key_data(post, options, money)
         # MD5(username|password|orderid|amount|time)
         now = Time.now.to_i.to_s

@@ -153,6 +153,8 @@ module ActiveMerchant #:nodoc:
         post = { :trans_id => identification,
                  :card_num => options[:card_number]
                }
+        post[:exp_date] = options[:exp_date] if identification.nil? # unlinked credit requires expiration date: "1213" for 12/2013
+        
         add_invoice(post, options)
 
         commit('CREDIT', money, post)
