@@ -315,3 +315,7 @@ wirecard:
   login: 56500
   password: TestXAPTER
   
+# Working test credentials, no need to replace
+jetpay:
+  login: TESTTERMINAL
+

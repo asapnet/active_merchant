@@ -15,6 +15,7 @@ require 'openssl'
 require 'mocha'
 require 'digest/md5'
 
+require File.dirname(__FILE__) + '/../lib/support/delegate_support' # see http://groups.google.com/group/activemerchant/browse_thread/thread/03a56c0e4e29d1a0
 require File.dirname(__FILE__) + '/../lib/active_merchant'
 
 begin
