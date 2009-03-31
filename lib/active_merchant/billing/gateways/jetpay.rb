@@ -19,6 +19,47 @@ module ActiveMerchant #:nodoc:
       # all transactions are in cents
       self.money_format = :cents
       
+      ACTION_CODE_MESSAGES = {
+        "001" =>  "Refer to card issuer.",
+        "002" =>  "Refer to card issuer, special condition.",
+        "003" =>  "Pick up card.",
+        "200" =>  "Deny - Pick up card.",
+        "005" =>  "Do not honor.",
+        "100" =>  "Deny.",
+        "006" =>  "Error.",
+        "181" =>  "Format error.",
+        "007" =>  "Pickup card, special condition.",
+        "104" =>  "Deny - New card issued.",
+        "110" =>  "Invalid amount.",
+        "014" =>  "Invalid account number (no such number).",
+        "111" =>  "Invalid account.",
+        "015" =>  "No such issuer.",
+        "103" =>  "Deny - Invalid manual Entry 4DBC.",
+        "182" =>  "Please wait.",
+        "109" =>  "Invalid merchant.",
+        "041" =>  "Pick up card (lost card).",
+        "043" =>  "Pick up card (stolen card).",
+        "051" =>  "Insufficient funds.",
+        "052" =>  "No checking account.",
+        "105" =>  "Deny - Account Cancelled.",
+        "054" =>  "Expired Card.",
+        "101" =>  "Expired Card.",
+        "183" =>  "Invalid currency code.",
+        "057" =>  "Transaction not permitted to cardholder.",
+        "115" =>  "Service not permitted.",
+        "062" =>  "Restricted card.",
+        "189" =>  "Deny - Cancelled or Closed Merchant/SE.",
+        "188" =>  "Deny - Expiration date required.",
+        "125" =>  "Invalid effective date.",
+        "122" =>  "Invalid card (CID) security code.",
+        "400" =>  "Reversal accepted.",
+        "992" =>  "DECLINE/TIMEOUT.",
+        "107" =>  "Please Call Issuer.",
+        "025" =>  "Transaction Not Found.",
+        "981" =>  "AVS Error.",
+        "913" =>  "Invalid Card Type."
+      }
+      
       def initialize(options = {})
         requires!(options, :login)
         @options = options
@@ -80,8 +121,9 @@ module ActiveMerchant #:nodoc:
       def commit(action, request)
         response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request))
         
-        Response.new(success?(response), 
-          message_from(response), 
+        success = success?(response)
+        Response.new(success, 
+          success ? 'APPROVED' : message_from(response), 
           response, 
           :test => test?, 
           :authorization => authorization_from(response))
@@ -114,7 +156,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def message_from(response)
-        response[:response_text]
+        ACTION_CODE_MESSAGES[response[:action_code]]
       end
       
       def authorization_from(response)

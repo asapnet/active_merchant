@@ -20,13 +20,16 @@ class RemoteJetpayTest < Test::Unit::TestCase
   def test_successful_purchase
     assert response = @gateway.purchase(9900, @credit_card, @options)
     assert_success response
-    assert_equal 'APPROVED', response.message
+    assert_equal "APPROVED", response.message
+    assert_not_nil response.authorization
+    assert_not_nil response.params["transaction_id"]
   end
   
   def test_unsuccessful_purchase
     assert response = @gateway.purchase(5205, @declined_card, @options)
     assert_failure response
-    assert_equal 'DECLINED', response.message
+    assert_equal "Do not honor.", response.message
+    assert_not_nil response.params["transaction_id"]
   end
   
 #  def test_authorize_and_capture
