@@ -34,6 +34,28 @@ class JetpayTest < Test::Unit::TestCase
     assert response.test?
   end
   
+  def test_successful_authorize
+    @gateway.expects(:ssl_post).returns(successful_authorize_response)
+    
+    assert response = @gateway.authorize(@amount, @credit_card, @options)
+    assert_success response
+    
+    assert_equal('502F6B', response.authorization)
+    assert_equal('010327153017T10018', response.params["transaction_id"])
+    assert response.test?
+  end
+  
+  def test_successful_capture
+    @gateway.expects(:ssl_post).returns(successful_capture_response)
+    
+    assert response = @gateway.capture("010327153017T10018")
+    assert_success response
+    
+    assert_equal('502F6B', response.authorization)
+    assert_equal('010327153017T10018', response.params["transaction_id"])
+    assert response.test?    
+  end
+  
   
   private
   
@@ -54,6 +76,28 @@ class JetpayTest < Test::Unit::TestCase
         <TransactionID>7605f7c5d6e8f74deb</TransactionID>
         <ActionCode>005</ActionCode>
         <ResponseText>DECLINED</ResponseText>
+      </JetPayResponse>
+    EOF
+  end
+  
+  def successful_authorize_response
+    <<-EOF
+      <JetPayResponse> 
+        <TransactionID>010327153017T10018</TransactionID> 
+        <ActionCode>000</ActionCode> 
+        <Approval>502F6B</Approval> 
+        <ResponseText>APPROVED</ResponseText> 
+      </JetPayResponse>
+    EOF
+  end
+  
+  def successful_capture_response
+    <<-EOF
+      <JetPayResponse> 
+        <TransactionID>010327153017T10018</TransactionID> 
+        <ActionCode>000</ActionCode> 
+        <Approval>502F6B</Approval> 
+        <ResponseText>APPROVED</ResponseText> 
       </JetPayResponse>
     EOF
   end

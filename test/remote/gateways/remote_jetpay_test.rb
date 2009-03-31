@@ -32,31 +32,30 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_not_nil response.params["transaction_id"]
   end
   
-#  def test_authorize_and_capture
-#    amount = @amount
-#    assert auth = @gateway.authorize(amount, @credit_card, @options)
-#    assert_success auth
-#    assert_equal 'Success', auth.message
-#    assert auth.authorization
-#    assert capture = @gateway.capture(amount, auth.authorization)
-#    assert_success capture
-#  end
-#
-#  def test_failed_capture
-#    assert response = @gateway.capture(@amount, '')
-#    assert_failure response
-#    assert_equal 'REPLACE WITH GATEWAY FAILURE MESSAGE', response.message
-#  end
-#
-#  def test_invalid_login
-#    gateway = JetpayGateway.new(
-#                :login => '',
-#                :password => ''
-#              )
-#    assert response = gateway.purchase(@amount, @credit_card, @options)
-#    assert_failure response
-#    assert_equal 'REPLACE WITH FAILURE MESSAGE', response.message
-#  end
+  def test_authorize_and_capture
+    assert auth = @gateway.authorize(9900, @credit_card, @options)
+    assert_success auth
+    assert_equal 'APPROVED', auth.message
+    assert_not_nil auth.authorization
+    assert_not_nil auth.params["transaction_id"]
+    
+    assert capture = @gateway.capture(auth.params["transaction_id"])
+    assert_success capture
+  end
+  
+  def test_failed_capture
+    assert response = @gateway.capture('7605f7c5d6e8f74deb')
+    assert_failure response
+    assert_equal 'Transaction Not Found.', response.message
+  end
+
+  def test_invalid_login
+    gateway = JetpayGateway.new(:login => '')
+    assert response = gateway.purchase(9900, @credit_card, @options)
+    assert_failure response
+    
+    assert_equal 'Terminal ID Not Found.', response.message
+  end
   
   
 end

@@ -57,7 +57,8 @@ module ActiveMerchant #:nodoc:
         "107" =>  "Please Call Issuer.",
         "025" =>  "Transaction Not Found.",
         "981" =>  "AVS Error.",
-        "913" =>  "Invalid Card Type."
+        "913" =>  "Invalid Card Type.",
+        "996" =>  "Terminal ID Not Found."
       }
       
       def initialize(options = {})
@@ -70,18 +71,12 @@ module ActiveMerchant #:nodoc:
         commit('sale', build_sale_request(money, credit_card, options))
       end
       
-      def authorize(money, creditcard, options = {})
-        post = {}
-        add_invoice(post, options)
-        add_creditcard(post, creditcard)        
-        add_address(post, creditcard, options)        
-        add_customer_data(post, options)
-        
-        commit('authonly', money, post)
+      def authorize(money, credit_card, options = {})
+        commit('authonly', build_authonly_request(money, credit_card, options))
       end
       
-      def capture(money, authorization, options = {})
-        commit('capt', money, post)
+      def capture(transaction_id)
+        commit('capt', build_capture_request(transaction_id))
       end
       
       def void(identification, options = {})
@@ -115,6 +110,27 @@ module ActiveMerchant #:nodoc:
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
+        end
+      end
+      
+      def build_authonly_request(money, credit_card, options)
+        build_xml_request do |xml|
+          xml.tag! 'TransactionType', 'AUTHONLY'
+          xml.tag! 'CardNum', credit_card.number
+          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
+          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          xml.tag! 'TotalAmount', amount(money)
+          
+          xml.target!
+        end
+      end
+      
+      def build_capture_request(transaction_id)
+        xml = Builder::XmlMarkup.new
+        xml.tag! 'JetPay' do
+          xml.tag! 'TransactionType', 'CAPT'
+          xml.tag! 'TerminalID', @options[:login]
+          xml.tag! 'TransactionID', transaction_id
         end
       end
       
@@ -171,9 +187,6 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_address(post, creditcard, options)
-      end
-      
-      def add_invoice(post, options)
       end
       
     end
