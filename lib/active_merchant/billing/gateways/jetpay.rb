@@ -8,7 +8,7 @@ module ActiveMerchant #:nodoc:
       self.supported_countries = ['US']
       
       # The card types supported by the payment gateway
-      self.supported_cardtypes = [:visa, :master, :american_express]
+      self.supported_cardtypes = [:visa, :master, :american_express, :discover]
       
       # The homepage URL of the gateway
       self.homepage_url = 'http://www.jetpay.com/'
@@ -54,7 +54,6 @@ module ActiveMerchant #:nodoc:
       
       private
       
-      
       def build_xml_request(&block)
         xml = Builder::XmlMarkup.new
         xml.tag! 'JetPay' do
@@ -81,18 +80,20 @@ module ActiveMerchant #:nodoc:
       def commit(action, request)
         response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request))
         
-        puts response
+        Response.new(success?(response), 
+          message_from(response), 
+          response, 
+          :test => test?, 
+          :authorization => authorization_from(response))
       end
       
       def parse(body)
         xml = REXML::Document.new(body)
-
-        response = {}
         
+        response = {}
         xml.root.elements.to_a.each do |node|
           parse_element(response, node)
         end
-
         response
       end
       
@@ -103,12 +104,23 @@ module ActiveMerchant #:nodoc:
           response[node.name.underscore.to_sym] = node.text
         end
       end
-
+      
       def format_exp(value)
         "#{format(value, :two_digits)}"
       end
-
-
+      
+      def success?(response)
+        response[:action_code] == "000"
+      end
+      
+      def message_from(response)
+        response[:response_text]
+      end
+      
+      def authorization_from(response)
+        response[:approval]
+      end
+      
 
 
 
@@ -120,9 +132,6 @@ module ActiveMerchant #:nodoc:
       end
       
       def add_invoice(post, options)
-      end
-      
-      def message_from(response)
       end
       
     end
