@@ -83,8 +83,8 @@ module ActiveMerchant #:nodoc:
         commit(build_void_request(money, credit_card, transaction_id, authorization))
       end
       
-      def credit(money, identification, options = {})
-        
+      def credit(money, credit_card, transaction_id)
+        commit(build_credit_request(money, credit_card, transaction_id))
       end
       
       
@@ -142,6 +142,18 @@ module ActiveMerchant #:nodoc:
           
           xml.target!
         end        
+      end
+      
+      def build_credit_request(money, credit_card, transaction_id)
+        build_xml_request(transaction_id) do |xml|
+          xml.tag! 'TransactionType', 'CREDIT'
+          xml.tag! 'CardNum', credit_card.number
+          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
+          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          xml.tag! 'TotalAmount', amount(money)
+          
+          xml.target!
+        end
       end
       
       def commit(request)

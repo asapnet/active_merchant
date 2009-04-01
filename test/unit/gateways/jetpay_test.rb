@@ -67,6 +67,17 @@ class JetpayTest < Test::Unit::TestCase
     assert response.test?
   end
   
+  def test_successful_credit
+    @gateway.expects(:ssl_post).returns(successful_credit_response)
+    
+    assert response = @gateway.credit(9900, @credit_card, '010327153017T10017')
+    assert_success response
+    
+    assert_equal('002F6B', response.authorization)
+    assert_equal('010327153017T10017', response.params['transaction_id'])
+    assert response.test?
+  end
+  
   
   private
   
@@ -93,33 +104,44 @@ class JetpayTest < Test::Unit::TestCase
   
   def successful_authorize_response
     <<-EOF
-      <JetPayResponse> 
-        <TransactionID>010327153017T10018</TransactionID> 
-        <ActionCode>000</ActionCode> 
-        <Approval>502F6B</Approval> 
-        <ResponseText>APPROVED</ResponseText> 
+      <JetPayResponse>
+        <TransactionID>010327153017T10018</TransactionID>
+        <ActionCode>000</ActionCode>
+        <Approval>502F6B</Approval>
+        <ResponseText>APPROVED</ResponseText>
       </JetPayResponse>
     EOF
   end
   
   def successful_capture_response
     <<-EOF
-      <JetPayResponse> 
-        <TransactionID>010327153017T10018</TransactionID> 
-        <ActionCode>000</ActionCode> 
-        <Approval>502F6B</Approval> 
-        <ResponseText>APPROVED</ResponseText> 
+      <JetPayResponse>
+        <TransactionID>010327153017T10018</TransactionID>
+        <ActionCode>000</ActionCode>
+        <Approval>502F6B</Approval>
+        <ResponseText>APPROVED</ResponseText>
       </JetPayResponse>
     EOF
   end
   
   def successful_void_response
     <<-EOF
-      <JetPayResponse> 
-        <TransactionID>010327153x17T10418</TransactionID> 
-        <ActionCode>000</ActionCode> 
-        <Approval>502F7B</Approval> 
-        <ResponseText>VOID PROCESSED</ResponseText> 
+      <JetPayResponse>
+        <TransactionID>010327153x17T10418</TransactionID>
+        <ActionCode>000</ActionCode>
+        <Approval>502F7B</Approval>
+        <ResponseText>VOID PROCESSED</ResponseText>
+      </JetPayResponse>
+    EOF
+  end
+  
+  def successful_credit_response
+    <<-EOF
+      <JetPayResponse>
+        <TransactionID>010327153017T10017</TransactionID>
+        <ActionCode>000</ActionCode>
+        <Approval>002F6B</Approval>
+        <ResponseText>APPROVED</ResponseText>
       </JetPayResponse>
     EOF
   end
