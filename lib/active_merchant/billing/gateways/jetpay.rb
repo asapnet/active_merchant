@@ -68,19 +68,19 @@ module ActiveMerchant #:nodoc:
       end  
       
       def purchase(money, credit_card, options = {})
-        commit('sale', build_sale_request(money, credit_card, options))
+        commit(build_sale_request(money, credit_card, options))
       end
       
       def authorize(money, credit_card, options = {})
-        commit('authonly', build_authonly_request(money, credit_card, options))
+        commit(build_authonly_request(money, credit_card, options))
       end
       
       def capture(transaction_id)
-        commit('capt', build_capture_request(transaction_id))
+        commit(build_capture_request(transaction_id))
       end
       
-      def void(identification, options = {})
-        
+      def void(money, credit_card, transaction_id, authorization)
+        commit(build_void_request(money, credit_card, transaction_id, authorization))
       end
       
       def credit(money, identification, options = {})
@@ -90,12 +90,12 @@ module ActiveMerchant #:nodoc:
       
       private
       
-      def build_xml_request(&block)
+      def build_xml_request(transaction_id = nil, &block)
         xml = Builder::XmlMarkup.new
         xml.tag! 'JetPay' do
           # The basic values needed for any request
           xml.tag! 'TerminalID', @options[:login]
-          xml.tag! 'TransactionID', Utils.generate_unique_id.slice(0, 18)
+          xml.tag! 'TransactionID', transaction_id.nil? ? Utils.generate_unique_id.slice(0, 18) : transaction_id
           
           yield xml
         end
@@ -126,15 +126,25 @@ module ActiveMerchant #:nodoc:
       end
       
       def build_capture_request(transaction_id)
-        xml = Builder::XmlMarkup.new
-        xml.tag! 'JetPay' do
+        build_xml_request(transaction_id) do |xml|
           xml.tag! 'TransactionType', 'CAPT'
-          xml.tag! 'TerminalID', @options[:login]
-          xml.tag! 'TransactionID', transaction_id
-        end
+        end        
       end
       
-      def commit(action, request)
+      def build_void_request(money, credit_card, transaction_id, authorization)
+        build_xml_request(transaction_id) do |xml|
+          xml.tag! 'TransactionType', 'VOID'
+          xml.tag! 'CardNum', credit_card.number
+          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
+          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          xml.tag! 'Approval', authorization
+          xml.tag! 'TotalAmount', amount(money)
+          
+          xml.target!
+        end        
+      end
+      
+      def commit(request)
         response = parse(ssl_post(test? ? TEST_URL : LIVE_URL, request))
         
         success = success?(response)

@@ -43,6 +43,18 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_success capture
   end
   
+  def test_void
+    # must void a valid auth
+    assert auth = @gateway.authorize(9900, @credit_card, @options)
+    assert_success auth
+    assert_equal 'APPROVED', auth.message
+    assert_not_nil auth.authorization
+    assert_not_nil auth.params["transaction_id"]
+    
+    assert void = @gateway.void(9900, @credit_card, auth.params["transaction_id"], auth.authorization)
+    assert_success void
+  end
+  
   def test_failed_capture
     assert response = @gateway.capture('7605f7c5d6e8f74deb')
     assert_failure response
