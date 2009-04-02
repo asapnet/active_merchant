@@ -83,7 +83,7 @@ module ActiveMerchant #:nodoc:
         commit(build_void_request('VOID', money, credit_card, transaction_id, authorization))
       end
       
-      def credit(money, credit_card, transaction_id)
+      def credit(money, credit_card, transaction_id = nil)
         commit(build_credit_request('CREDIT', money, credit_card, transaction_id))
       end
       
@@ -108,9 +108,7 @@ module ActiveMerchant #:nodoc:
       
       def build_sale_request(transaction_type, money, credit_card, options)
         build_xml_request(transaction_type) do |xml|
-          xml.tag! 'CardNum', credit_card.number
-          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
-          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          add_credit_card(xml, credit_card)
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
@@ -119,9 +117,7 @@ module ActiveMerchant #:nodoc:
       
       def build_authonly_request(transaction_type, money, credit_card, options)
         build_xml_request(transaction_type) do |xml|
-          xml.tag! 'CardNum', credit_card.number
-          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
-          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          add_credit_card(xml, credit_card)
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
@@ -134,9 +130,7 @@ module ActiveMerchant #:nodoc:
       
       def build_void_request(transaction_type, money, credit_card, transaction_id, authorization)
         build_xml_request(transaction_type, transaction_id) do |xml|
-          xml.tag! 'CardNum', credit_card.number
-          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
-          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          add_credit_card(xml, credit_card)
           xml.tag! 'Approval', authorization
           xml.tag! 'TotalAmount', amount(money)
           
@@ -146,9 +140,7 @@ module ActiveMerchant #:nodoc:
       
       def build_credit_request(transaction_type, money, credit_card, transaction_id)
         build_xml_request(transaction_type, transaction_id) do |xml|
-          xml.tag! 'CardNum', credit_card.number
-          xml.tag! 'CardExpMonth', format_exp(credit_card.month)
-          xml.tag! 'CardExpYear', format_exp(credit_card.year)
+          add_credit_card(xml, credit_card)
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
@@ -200,7 +192,13 @@ module ActiveMerchant #:nodoc:
         response[:approval]
       end
       
-
+      def add_credit_card(xml, credit_card)
+        xml.tag! 'CardNum', credit_card.number
+        xml.tag! 'CardExpMonth', format_exp(credit_card.month)
+        xml.tag! 'CardExpYear', format_exp(credit_card.year)
+        xml.tag! 'CardName', credit_card.first_name + ' ' + credit_card.last_name      
+        xml.tag! 'CVV2', credit_card.verification_value
+      end
 
 
 
