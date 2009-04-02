@@ -109,6 +109,9 @@ module ActiveMerchant #:nodoc:
       def build_sale_request(transaction_type, money, credit_card, options)
         build_xml_request(transaction_type) do |xml|
           add_credit_card(xml, credit_card)
+          add_addresses(xml, options)
+          add_customer_data(xml, options)
+          add_invoice_data(xml, options)
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
@@ -118,6 +121,9 @@ module ActiveMerchant #:nodoc:
       def build_authonly_request(transaction_type, money, credit_card, options)
         build_xml_request(transaction_type) do |xml|
           add_credit_card(xml, credit_card)
+          add_addresses(xml, options)
+          add_customer_data(xml, options)
+          add_invoice_data(xml, options)
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
@@ -199,15 +205,41 @@ module ActiveMerchant #:nodoc:
         xml.tag! 'CardName', credit_card.first_name + ' ' + credit_card.last_name      
         xml.tag! 'CVV2', credit_card.verification_value
       end
-
-
-
-      def add_customer_data(post, options)
+      
+      def add_addresses(xml, options)
+        if billing_address = options[:billing_address] || options[:address]
+          xml.tag! 'BillingAddress', billing_address[:address1] + ' ' + billing_address[:address2].to_s
+          xml.tag! 'BillingCity', billing_address[:city]
+          xml.tag! 'BillingStateProv', billing_address[:state]
+          xml.tag! 'BillingPostalCode', billing_address[:zip]
+          xml.tag! 'BillingCountry', billing_address[:country]
+          xml.tag! 'BillingPhone', billing_address[:phone]
+        end
+        
+        if shipping_address = options[:shipping_address]
+          xml.tag! 'ShippingInfo' do
+            xml.tag! 'ShippingName', shipping_address[:name]
+            
+            xml.tag! 'ShippingAddr' do
+              xml.tag! 'Address', shipping_address[:address1] + ' ' + shipping_address[:address2].to_s
+              xml.tag! 'City', shipping_address[:city]
+              xml.tag! 'StateProv', shipping_address[:state]
+              xml.tag! 'PostalCode', shipping_address[:zip]
+              xml.tag! 'Country', shipping_address[:country]
+            end
+          end
+        end
       end
 
-      def add_address(post, creditcard, options)
+      def add_customer_data(xml, options)
+        xml.tag! 'Email', options[:email] if options[:email]
+        xml.tag! 'UserIPAddress', options[:ip] if options[:ip]
       end
       
+      def add_invoice_data(xml, options)
+        xml.tag! 'OrderNumber', options[:order_id] if options[:order_id]
+        xml.tag! 'TaxAmount', options[:tax] if options[:tax]
+      end
     end
   end
 end

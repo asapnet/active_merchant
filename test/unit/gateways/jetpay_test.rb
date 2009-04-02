@@ -7,11 +7,15 @@ class JetpayTest < Test::Unit::TestCase
     @credit_card = credit_card
     @amount = 100
     
-    @options = {}
-#      :order_id => '1',
-#      :billing_address => address,
-#      :description => 'Store Purchase'
-#    }
+    @options = {
+      :order_id => '1',
+      :billing_address => address(:country => 'USA'),
+      :shipping_address => address(:country => 'USA'),
+      :email => 'test@test.com',
+      :ip => '127.0.0.1',
+      :order_id => '12345',
+      :tax => '7'
+    }
   end
   
   def test_successful_purchase

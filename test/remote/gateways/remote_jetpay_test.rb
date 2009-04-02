@@ -8,13 +8,15 @@ class RemoteJetpayTest < Test::Unit::TestCase
     @credit_card = credit_card('4000300020001000')
     @declined_card = credit_card('4000300020001000')
     
-    @options = {}
-    
-#    @options = { 
-#      :order_id => '1',
-#      :billing_address => address,
-#      :description => 'Store Purchase'
-#    }
+    @options = {
+      :order_id => '1',
+      :billing_address => address(:country => 'USA'),
+      :shipping_address => address(:country => 'USA'),
+      :email => 'test@test.com',
+      :ip => '127.0.0.1',
+      :order_id => '12345',
+      :tax => '7'
+    }
   end
   
   def test_successful_purchase
