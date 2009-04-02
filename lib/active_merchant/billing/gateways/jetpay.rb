@@ -68,42 +68,46 @@ module ActiveMerchant #:nodoc:
       end  
       
       def purchase(money, credit_card, options = {})
-        commit(build_sale_request(money, credit_card, options))
+        commit(build_sale_request('SALE', money, credit_card, options))
       end
       
       def authorize(money, credit_card, options = {})
-        commit(build_authonly_request(money, credit_card, options))
+        commit(build_authonly_request('AUTHONLY', money, credit_card, options))
       end
       
       def capture(transaction_id)
-        commit(build_capture_request(transaction_id))
+        commit(build_capture_request('CAPT', transaction_id))
       end
       
       def void(money, credit_card, transaction_id, authorization)
-        commit(build_void_request(money, credit_card, transaction_id, authorization))
+        commit(build_void_request('VOID', money, credit_card, transaction_id, authorization))
       end
       
       def credit(money, credit_card, transaction_id)
-        commit(build_credit_request(money, credit_card, transaction_id))
+        commit(build_credit_request('CREDIT', money, credit_card, transaction_id))
       end
       
       
       private
       
-      def build_xml_request(transaction_id = nil, &block)
+      def build_xml_request(transaction_type, transaction_id = nil, &block)
         xml = Builder::XmlMarkup.new
         xml.tag! 'JetPay' do
           # The basic values needed for any request
           xml.tag! 'TerminalID', @options[:login]
+          xml.tag! 'TransactionType', transaction_type
           xml.tag! 'TransactionID', transaction_id.nil? ? Utils.generate_unique_id.slice(0, 18) : transaction_id
           
-          yield xml
+          if block_given?
+            yield xml
+          else 
+            xml.target!
+          end
         end
       end
       
-      def build_sale_request(money, credit_card, options)
-        build_xml_request do |xml|
-          xml.tag! 'TransactionType', 'SALE'
+      def build_sale_request(transaction_type, money, credit_card, options)
+        build_xml_request(transaction_type) do |xml|
           xml.tag! 'CardNum', credit_card.number
           xml.tag! 'CardExpMonth', format_exp(credit_card.month)
           xml.tag! 'CardExpYear', format_exp(credit_card.year)
@@ -113,9 +117,8 @@ module ActiveMerchant #:nodoc:
         end
       end
       
-      def build_authonly_request(money, credit_card, options)
-        build_xml_request do |xml|
-          xml.tag! 'TransactionType', 'AUTHONLY'
+      def build_authonly_request(transaction_type, money, credit_card, options)
+        build_xml_request(transaction_type) do |xml|
           xml.tag! 'CardNum', credit_card.number
           xml.tag! 'CardExpMonth', format_exp(credit_card.month)
           xml.tag! 'CardExpYear', format_exp(credit_card.year)
@@ -125,15 +128,12 @@ module ActiveMerchant #:nodoc:
         end
       end
       
-      def build_capture_request(transaction_id)
-        build_xml_request(transaction_id) do |xml|
-          xml.tag! 'TransactionType', 'CAPT'
-        end        
+      def build_capture_request(transaction_type, transaction_id)
+        build_xml_request(transaction_type, transaction_id)
       end
       
-      def build_void_request(money, credit_card, transaction_id, authorization)
-        build_xml_request(transaction_id) do |xml|
-          xml.tag! 'TransactionType', 'VOID'
+      def build_void_request(transaction_type, money, credit_card, transaction_id, authorization)
+        build_xml_request(transaction_type, transaction_id) do |xml|
           xml.tag! 'CardNum', credit_card.number
           xml.tag! 'CardExpMonth', format_exp(credit_card.month)
           xml.tag! 'CardExpYear', format_exp(credit_card.year)
@@ -144,9 +144,8 @@ module ActiveMerchant #:nodoc:
         end        
       end
       
-      def build_credit_request(money, credit_card, transaction_id)
-        build_xml_request(transaction_id) do |xml|
-          xml.tag! 'TransactionType', 'CREDIT'
+      def build_credit_request(transaction_type, money, credit_card, transaction_id)
+        build_xml_request(transaction_type, transaction_id) do |xml|
           xml.tag! 'CardNum', credit_card.number
           xml.tag! 'CardExpMonth', format_exp(credit_card.month)
           xml.tag! 'CardExpYear', format_exp(credit_card.year)
