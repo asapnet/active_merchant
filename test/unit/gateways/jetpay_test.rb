@@ -70,12 +70,19 @@ class JetpayTest < Test::Unit::TestCase
   def test_successful_credit
     @gateway.expects(:ssl_post).returns(successful_credit_response)
     
+    # linked credit
     assert response = @gateway.credit(9900, @credit_card, '010327153017T10017')
     assert_success response
     
     assert_equal('002F6B', response.authorization)
     assert_equal('010327153017T10017', response.params['transaction_id'])
     assert response.test?
+    
+    # unlinked credit
+    @gateway.expects(:ssl_post).returns(successful_credit_response)
+    
+    assert response = @gateway.credit(9900, @credit_card)
+    assert_success response    
   end
   
   
