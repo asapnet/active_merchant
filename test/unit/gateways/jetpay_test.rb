@@ -61,9 +61,12 @@ class JetpayTest < Test::Unit::TestCase
   end
   
   def test_successful_void
+    # no need for csv
+    card = credit_card('4242424242424242', :verification_value => nil)
+    
     @gateway.expects(:ssl_post).returns(successful_void_response)
     
-    assert response = @gateway.void(9900, @credit_card, '010327153x17T10418', '502F7B')
+    assert response = @gateway.void(9900, card, '010327153x17T10418', '502F7B')
     assert_success response
     
     assert_equal('502F7B', response.authorization)
@@ -72,10 +75,13 @@ class JetpayTest < Test::Unit::TestCase
   end
   
   def test_successful_credit
+    # no need for csv
+    card = credit_card('4242424242424242', :verification_value => nil)
+
     @gateway.expects(:ssl_post).returns(successful_credit_response)
     
     # linked credit
-    assert response = @gateway.credit(9900, @credit_card, '010327153017T10017')
+    assert response = @gateway.credit(9900, card, '010327153017T10017')
     assert_success response
     
     assert_equal('002F6B', response.authorization)
@@ -85,7 +91,7 @@ class JetpayTest < Test::Unit::TestCase
     # unlinked credit
     @gateway.expects(:ssl_post).returns(successful_credit_response)
     
-    assert response = @gateway.credit(9900, @credit_card)
+    assert response = @gateway.credit(9900, card)
     assert_success response    
   end
   

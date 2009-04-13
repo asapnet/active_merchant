@@ -58,22 +58,28 @@ class RemoteJetpayTest < Test::Unit::TestCase
   end
   
   def test_linked_credit
-    assert response = @gateway.purchase(9900, @credit_card, @options)
+    # no need for csv
+    card = credit_card('4242424242424242', :verification_value => nil)
+    
+    assert response = @gateway.purchase(9900, card, @options)
     assert_success response
     assert_equal "APPROVED", response.message
     assert_not_nil response.authorization
     assert_not_nil response.params["transaction_id"]
     
     # linked to a specific transaction_id
-    assert credit = @gateway.credit(9900, @credit_card, response.params["transaction_id"])
+    assert credit = @gateway.credit(9900, card, response.params["transaction_id"])
     assert_success credit
     assert_not_nil(credit.authorization)
     assert_equal(response.params['transaction_id'], credit.params['transaction_id'])
   end
   
   def test_unlinked_credit
+    # no need for csv
+    card = credit_card('4242424242424242', :verification_value => nil)
+    
     # no link to a specific transaction_id
-    assert credit = @gateway.credit(9900, @credit_card)
+    assert credit = @gateway.credit(9900, card)
     assert_success credit
     assert_not_nil(credit.authorization)
     assert_not_nil(credit.params["transaction_id"])
