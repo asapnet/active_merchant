@@ -24,8 +24,8 @@ class JetpayTest < Test::Unit::TestCase
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_success response
     
-    assert_equal 'TEST10', response.authorization
-    assert_equal('aa26f0722b49237194', response.params["transaction_id"])
+    assert_equal 'aa26f0722b49237194', response.authorization
+    assert_equal('TEST10', response.params["approval"])
     assert response.test?
   end
 
@@ -34,7 +34,7 @@ class JetpayTest < Test::Unit::TestCase
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
-    assert_equal('7605f7c5d6e8f74deb', response.params["transaction_id"])
+    assert_equal('7605f7c5d6e8f74deb', response.authorization)
     assert response.test?
   end
   
@@ -44,8 +44,8 @@ class JetpayTest < Test::Unit::TestCase
     assert response = @gateway.authorize(@amount, @credit_card, @options)
     assert_success response
     
-    assert_equal('502F6B', response.authorization)
-    assert_equal('010327153017T10018', response.params["transaction_id"])
+    assert_equal('010327153017T10018', response.authorization)
+    assert_equal('502F6B', response.params["approval"])
     assert response.test?
   end
   
@@ -55,8 +55,8 @@ class JetpayTest < Test::Unit::TestCase
     assert response = @gateway.capture("010327153017T10018")
     assert_success response
     
-    assert_equal('502F6B', response.authorization)
-    assert_equal('010327153017T10018', response.params["transaction_id"])
+    assert_equal('010327153017T10018', response.authorization)
+    assert_equal('502F6B', response.params["approval"])
     assert response.test?
   end
   
@@ -69,8 +69,8 @@ class JetpayTest < Test::Unit::TestCase
     assert response = @gateway.void(9900, card, '010327153x17T10418', '502F7B')
     assert_success response
     
-    assert_equal('502F7B', response.authorization)
-    assert_equal('010327153x17T10418', response.params["transaction_id"])
+    assert_equal('010327153x17T10418', response.authorization)
+    assert_equal('502F7B', response.params["approval"])
     assert response.test?
   end
   
@@ -84,8 +84,8 @@ class JetpayTest < Test::Unit::TestCase
     assert response = @gateway.credit(9900, card, '010327153017T10017')
     assert_success response
     
-    assert_equal('002F6B', response.authorization)
-    assert_equal('010327153017T10017', response.params['transaction_id'])
+    assert_equal('010327153017T10017', response.authorization)
+    assert_equal('002F6B', response.params['approval'])
     assert response.test?
     
     # unlinked credit

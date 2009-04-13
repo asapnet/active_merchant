@@ -79,8 +79,8 @@ module ActiveMerchant #:nodoc:
         commit(build_capture_request('CAPT', transaction_id))
       end
       
-      def void(money, credit_card, transaction_id, authorization)
-        commit(build_void_request('VOID', money, credit_card, transaction_id, authorization))
+      def void(money, credit_card, transaction_id, approval)
+        commit(build_void_request('VOID', money, credit_card, transaction_id, approval))
       end
       
       def credit(money, credit_card, transaction_id = nil)
@@ -134,10 +134,10 @@ module ActiveMerchant #:nodoc:
         build_xml_request(transaction_type, transaction_id)
       end
       
-      def build_void_request(transaction_type, money, credit_card, transaction_id, authorization)
+      def build_void_request(transaction_type, money, credit_card, transaction_id, approval)
         build_xml_request(transaction_type, transaction_id) do |xml|
           add_credit_card(xml, credit_card)
-          xml.tag! 'Approval', authorization
+          xml.tag! 'Approval', approval
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
@@ -195,7 +195,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def authorization_from(response)
-        response[:approval]
+        response[:transaction_id]
       end
       
       def add_credit_card(xml, credit_card)

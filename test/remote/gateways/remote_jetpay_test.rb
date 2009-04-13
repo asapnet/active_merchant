@@ -24,14 +24,13 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_success response
     assert_equal "APPROVED", response.message
     assert_not_nil response.authorization
-    assert_not_nil response.params["transaction_id"]
+    assert_not_nil response.params["approval"]
   end
   
   def test_unsuccessful_purchase
     assert response = @gateway.purchase(5205, @declined_card, @options)
     assert_failure response
     assert_equal "Do not honor.", response.message
-    assert_not_nil response.params["transaction_id"]
   end
   
   def test_authorize_and_capture
@@ -39,9 +38,9 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_success auth
     assert_equal 'APPROVED', auth.message
     assert_not_nil auth.authorization
-    assert_not_nil auth.params["transaction_id"]
+    assert_not_nil auth.params["approval"]
     
-    assert capture = @gateway.capture(auth.params["transaction_id"])
+    assert capture = @gateway.capture(auth.authorization)
     assert_success capture
   end
   
@@ -51,9 +50,9 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_success auth
     assert_equal 'APPROVED', auth.message
     assert_not_nil auth.authorization
-    assert_not_nil auth.params["transaction_id"]
+    assert_not_nil auth.params["approval"]
     
-    assert void = @gateway.void(9900, @credit_card, auth.params["transaction_id"], auth.authorization)
+    assert void = @gateway.void(9900, @credit_card, auth.authorization, auth.params["approval"])
     assert_success void
   end
   
@@ -65,13 +64,14 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_success response
     assert_equal "APPROVED", response.message
     assert_not_nil response.authorization
-    assert_not_nil response.params["transaction_id"]
+    assert_not_nil response.params["approval"]
     
     # linked to a specific transaction_id
-    assert credit = @gateway.credit(9900, card, response.params["transaction_id"])
+    assert credit = @gateway.credit(9900, card, response.authorization)
     assert_success credit
     assert_not_nil(credit.authorization)
-    assert_equal(response.params['transaction_id'], credit.params['transaction_id'])
+    assert_not_nil(response.params["approval"])
+    assert_equal(response.params['transaction_id'], response.authorization)
   end
   
   def test_unlinked_credit
@@ -82,7 +82,7 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert credit = @gateway.credit(9900, card)
     assert_success credit
     assert_not_nil(credit.authorization)
-    assert_not_nil(credit.params["transaction_id"])
+    assert_not_nil(credit.params["approval"])
   end
   
   def test_failed_capture
