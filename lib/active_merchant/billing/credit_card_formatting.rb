@@ -10,8 +10,14 @@ module ActiveMerchant #:nodoc:
         return '' if number.blank?
         
         case option
-          when :two_digits  ; sprintf("%.2i", number)[-2..-1]
-          when :four_digits ; sprintf("%.4i", number)[-4..-1]
+          when :two_digits
+            return number.to_s if number.to_s.length == 2
+            
+            sprintf("%.2i", number)[-2..-1]
+          when :four_digits
+            return number.to_s if number.to_s.length == 4
+            
+            sprintf("%.4i", number)[-4..-1]
           else number
         end
       end
