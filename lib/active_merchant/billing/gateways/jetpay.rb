@@ -68,23 +68,41 @@ module ActiveMerchant #:nodoc:
       end  
       
       def purchase(money, credit_card, options = {})
-        commit(build_sale_request('SALE', money, credit_card, options))
+        commit(build_sale_request(money, credit_card, options))
       end
       
       def authorize(money, credit_card, options = {})
-        commit(build_authonly_request('AUTHONLY', money, credit_card, options))
+        commit(build_authonly_request(money, credit_card, options))
       end
       
       def capture(transaction_id)
         commit(build_capture_request('CAPT', transaction_id))
       end
       
-      def void(money, credit_card, transaction_id, approval)
-        commit(build_void_request('VOID', money, credit_card, transaction_id, approval))
+      def void(transaction_id, options = {})
+        approval = options[:approval]
+        raise(ArgumentError, "`:approval` option is required") unless approval
+
+        money = options[:amount].to_i
+        raise(ArgumentError, "`:amount` option is required") unless money
+        
+
+        commit(build_void_request(money, transaction_id, approval))
       end
-      
-      def credit(money, credit_card, transaction_id = nil)
-        commit(build_credit_request('CREDIT', money, credit_card, transaction_id))
+
+      # Refund some money.
+      #
+      # 
+      def credit(money, transaction_id_or_card, options = {})
+        if transaction_id_or_card.is_a?(CreditCard)
+          transaction_id = nil
+          card = transaction_id_or_card
+        else
+          transaction_id = transaction_id
+          card = options[:card]
+        end
+
+        commit(build_credit_request('CREDIT', money, transaction_id, card))
       end
       
       
@@ -106,8 +124,8 @@ module ActiveMerchant #:nodoc:
         end
       end
       
-      def build_sale_request(transaction_type, money, credit_card, options)
-        build_xml_request(transaction_type) do |xml|
+      def build_sale_request(money, credit_card, options)
+        build_xml_request('SALE') do |xml|
           add_credit_card(xml, credit_card)
           add_addresses(xml, options)
           add_customer_data(xml, options)
@@ -118,8 +136,8 @@ module ActiveMerchant #:nodoc:
         end
       end
       
-      def build_authonly_request(transaction_type, money, credit_card, options)
-        build_xml_request(transaction_type) do |xml|
+      def build_authonly_request(money, credit_card, options)
+        build_xml_request('AUTHONLY') do |xml|
           add_credit_card(xml, credit_card)
           add_addresses(xml, options)
           add_customer_data(xml, options)
@@ -134,19 +152,19 @@ module ActiveMerchant #:nodoc:
         build_xml_request(transaction_type, transaction_id)
       end
       
-      def build_void_request(transaction_type, money, credit_card, transaction_id, approval)
-        build_xml_request(transaction_type, transaction_id) do |xml|
-          add_credit_card(xml, credit_card)
+      def build_void_request(money, transaction_id, approval)
+        build_xml_request('VOID', transaction_id) do |xml|
           xml.tag! 'Approval', approval
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!
         end        
       end
-      
-      def build_credit_request(transaction_type, money, credit_card, transaction_id)
+
+      # `transaction_id` may be nil for unlinked credit transactions.
+      def build_credit_request(transaction_type, money, transaction_id, card)
         build_xml_request(transaction_type, transaction_id) do |xml|
-          add_credit_card(xml, credit_card)
+          add_credit_card(xml, card) if card
           xml.tag! 'TotalAmount', amount(money)
           
           xml.target!

@@ -1,7 +1,11 @@
 require File.dirname(__FILE__) + '/../../test_helper'
 
 class JetpayTest < Test::Unit::TestCase
+  include ActiveMerchant::Billing
+
   def setup
+    Base.gateway_mode = :test
+
     @gateway = JetpayGateway.new(:login => 'login')
     
     @credit_card = credit_card
@@ -66,7 +70,7 @@ class JetpayTest < Test::Unit::TestCase
     
     @gateway.expects(:ssl_post).returns(successful_void_response)
     
-    assert response = @gateway.void(9900, card, '010327153x17T10418', '502F7B')
+    assert response = @gateway.void('010327153x17T10418', :approval => '502F7B')
     assert_success response
     
     assert_equal('010327153x17T10418', response.authorization)
@@ -81,7 +85,7 @@ class JetpayTest < Test::Unit::TestCase
     @gateway.expects(:ssl_post).returns(successful_credit_response)
     
     # linked credit
-    assert response = @gateway.credit(9900, card, '010327153017T10017')
+    assert response = @gateway.credit(9900, '010327153017T10017')
     assert_success response
     
     assert_equal('010327153017T10017', response.authorization)
