@@ -220,8 +220,10 @@ module ActiveMerchant #:nodoc:
         xml.tag! 'CardNum', credit_card.number
         xml.tag! 'CardExpMonth', format_exp(credit_card.month)
         xml.tag! 'CardExpYear', format_exp(credit_card.year)
-        xml.tag! 'CardName', credit_card.first_name + ' ' + credit_card.last_name
-        xml.tag! 'CardType', credit_card.type
+
+        if credit_card.first_name || credit_card.last_name
+          xml.tag! 'CardName', [credit_card.first_name,credit_card.last_name].compact.join(' ')
+        end
 
         unless credit_card.verification_value.nil? || (credit_card.verification_value.length == 0)
           xml.tag! 'CVV2', credit_card.verification_value
