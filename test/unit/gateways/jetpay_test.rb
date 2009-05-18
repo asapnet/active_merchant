@@ -56,7 +56,7 @@ class JetpayTest < Test::Unit::TestCase
   def test_successful_capture
     @gateway.expects(:ssl_post).returns(successful_capture_response)
     
-    assert response = @gateway.capture("010327153017T10018")
+    assert response = @gateway.capture(1111, "010327153017T10018")
     assert_success response
     
     assert_equal('010327153017T10018', response.authorization)
