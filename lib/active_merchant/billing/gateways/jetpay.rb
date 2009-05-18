@@ -75,7 +75,7 @@ module ActiveMerchant #:nodoc:
         commit(build_authonly_request(money, credit_card, options))
       end
       
-      def capture(transaction_id)
+      def capture(money, transaction_id, options = {})
         commit(build_capture_request('CAPT', transaction_id))
       end
       
@@ -221,7 +221,8 @@ module ActiveMerchant #:nodoc:
         xml.tag! 'CardExpMonth', format_exp(credit_card.month)
         xml.tag! 'CardExpYear', format_exp(credit_card.year)
         xml.tag! 'CardName', credit_card.first_name + ' ' + credit_card.last_name
-        
+        xml.tag! 'CardType', credit_card.type
+
         unless credit_card.verification_value.nil? || (credit_card.verification_value.length == 0)
           xml.tag! 'CVV2', credit_card.verification_value
         end
