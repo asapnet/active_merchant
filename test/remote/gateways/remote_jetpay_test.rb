@@ -52,7 +52,7 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_not_nil auth.authorization
     assert_not_nil auth.params["approval"]
     
-    assert void = @gateway.void(9900, @credit_card, auth.authorization, auth.params["approval"])
+    assert void = @gateway.void(auth.authorization, :approval => auth.params["approval"], :amount => 9900)
     assert_success void
   end
   
@@ -67,7 +67,7 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_not_nil response.params["approval"]
     
     # linked to a specific transaction_id
-    assert credit = @gateway.credit(9900, card, response.authorization)
+    assert credit = @gateway.credit(9900, response.authorization, :card => card)
     assert_success credit
     assert_not_nil(credit.authorization)
     assert_not_nil(response.params["approval"])
