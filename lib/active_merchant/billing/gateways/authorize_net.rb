@@ -141,19 +141,24 @@ module ActiveMerchant #:nodoc:
       # ==== Parameters
       #
       # * <tt>money</tt> -- The amount to be credited to the customer. Either an Integer value in cents or a Money object.
-      # * <tt>identification</tt> -- The ID of the original transaction against which the credit is being issued.
+      # * <tt>identification_or_card</tt> -- The ID of the original transaction, or credit card object, against which the credit is being issued.
       # * <tt>options</tt> -- A hash of parameters.
       #
       # ==== Options
       #
-      # * <tt>:card_number</tt> -- The credit card number the credit is being issued to. (REQUIRED)
-      def credit(money, identification, options = {})
-        requires!(options, :card_number)
-
-        post = { :trans_id => identification,
-                 :card_num => options[:card_number]
-               }
-        post[:exp_date] = options[:exp_date] if identification.nil? # unlinked credit requires expiration date: "1213" for 12/2013
+      # * <tt>:card</tt> -- credit card object to which credit is being issued.
+      # * <tt>:card_number</tt> -- The credit card number the credit is being issued to.
+      def credit(money, identification_or_card, options = {})
+        post = {} #:card_num => options[:card_number]}
+        
+        if identification_or_card.instance_of?(CreditCard)
+          post[:card_num] = identification_or_card.number
+          post[:exp_date] = identification_or_card.month.to_s + identification_or_card.year.to_s
+        else
+          post[:trans_id] = identification_or_card
+          post[:card_num] = options[:card].number if options[:card]
+          post[:card_num] ||= options[:card_number] 
+        end
         
         add_invoice(post, options)
 
@@ -336,7 +341,6 @@ module ActiveMerchant #:nodoc:
       end
 
       def add_address(post, options)
-
         if address = options[:billing_address] || options[:address]
           post[:address] = address[:address1].to_s
           post[:company] = address[:company].to_s
@@ -345,6 +349,18 @@ module ActiveMerchant #:nodoc:
           post[:city]    = address[:city].to_s
           post[:country] = address[:country].to_s
           post[:state]   = address[:state].blank?  ? 'n/a' : address[:state]
+        end
+        
+        if address = options[:shipping_address]
+          post[:ship_to_first_name] = address[:first_name].to_s
+          post[:ship_to_last_name] = address[:last_name].to_s
+          post[:ship_to_address] = address[:address1].to_s
+          post[:ship_to_company] = address[:company].to_s
+          post[:ship_to_phone]   = address[:phone].to_s
+          post[:ship_to_zip]     = address[:zip].to_s
+          post[:ship_to_city]    = address[:city].to_s
+          post[:ship_to_country] = address[:country].to_s
+          post[:ship_to_state]   = address[:state].blank?  ? 'n/a' : address[:state]
         end
       end
 
