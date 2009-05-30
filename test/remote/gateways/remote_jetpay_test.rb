@@ -40,7 +40,7 @@ class RemoteJetpayTest < Test::Unit::TestCase
     assert_not_nil auth.authorization
     assert_not_nil auth.params["approval"]
     
-    assert capture = @gateway.capture(auth.authorization)
+    assert capture = @gateway.capture(9900, auth.authorization)
     assert_success capture
   end
   
@@ -86,7 +86,7 @@ class RemoteJetpayTest < Test::Unit::TestCase
   end
   
   def test_failed_capture
-    assert response = @gateway.capture('7605f7c5d6e8f74deb')
+    assert response = @gateway.capture(9900, '7605f7c5d6e8f74deb')
     assert_failure response
     assert_equal 'Transaction Not Found.', response.message
   end
