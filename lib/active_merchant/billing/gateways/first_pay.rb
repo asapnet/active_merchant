@@ -20,6 +20,17 @@ module ActiveMerchant #:nodoc:
       # all transactions are in cents
       self.money_format = :cents
       
+      ACTIONS = {
+        'sale' => 1
+
+#        :authorization => 'auth',
+#        :purchase => 'sale',
+#        :capture => 'capture',
+#        :void => 'void',
+#        :credit => 'credit',
+#        :refund => 'refund'
+      }
+      
       def initialize(options = {})
         requires!(options, :login, :password)
         @options = options
@@ -42,7 +53,7 @@ module ActiveMerchant #:nodoc:
         add_creditcard(post, creditcard)        
         add_address(post, creditcard, options)   
         add_customer_data(post, options)
-             
+        
         commit('sale', money, post)
       end                       
     
@@ -54,20 +65,18 @@ module ActiveMerchant #:nodoc:
       private
       
       def add_customer_data(post, options)
-        # all fields required
-        # member (name)
-        # cardip (IP address)
-        # email
-        # 
+        post[:cardip] = options[:ip]
+        post[:email] = options[:email]
       end
       
       def add_address(post, creditcard, options)
-        # addr
-        # city
-        # state
-        # zip
-        # country
-        # 
+        if billing_address = options[:billing_address] || options[:address]
+          post[:addr]     = billing_address[:address1] + billing_address[:address2].to_s
+          post[:city]     = billing_address[:city]
+          post[:state]    = billing_address[:state]
+          post[:zip]      = billing_address[:zip]                             
+          post[:country]  = billing_address[:country]
+        end
       end
       
       def add_invoice(post, options)
@@ -75,6 +84,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def add_creditcard(post, creditcard)
+        post[:member] = creditcard.first_name + " " + creditcard.last_name
         post[:card] = creditcard.number
         post[:exp] = expdate(creditcard)
       end
@@ -87,15 +97,34 @@ module ActiveMerchant #:nodoc:
       end
       
       def parse(body)
+        # PTODO - split on : or look for error
+        body
       end     
       
-      def commit(action, money, parameters)
+      def commit(action, money, post)
+        post[:amount] = amount(money)
+        
+        response = parse( ssl_post(test? ? TEST_URL : LIVE_URL, post_data(action, post)) )
+        
+        # PTODO - parse response
+        
+#        Response.new(response[:response].to_i == SUCCESS, message_from(response), response,
+#          :test => test?,
+#          :authorization => response[:transactionid],
+#          :avs_result => { :code => response[:avsresponse] },
+#          :cvv_result => response[:cvvresponse]
+#        )
       end
       
       def message_from(response)
       end
       
-      def post_data(action, parameters = {})
+      def post_data(action, post)
+        post[:username]   = @options[:login]  
+        post[:password]   = @options[:password]
+        post[:type]       = ACTIONS[action]
+        
+        post.to_s
       end
     end
   end

@@ -10,7 +10,9 @@ class FirstPayTest < Test::Unit::TestCase
     @options = { 
       :order_id => '1',
       :billing_address => address,
-      :description => 'Store Purchase'
+      :description => 'Store Purchase',
+      :ip => '127.0.0.1',
+      :email => 'test@test.com'
     }
   end
   
@@ -18,11 +20,10 @@ class FirstPayTest < Test::Unit::TestCase
     @gateway.expects(:ssl_post).returns(successful_purchase_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
-    assert_instance_of 
     assert_success response
     
     # Replace with authorization number from the successful response
-    assert_equal '', response.authorization
+    assert_equal '199641568', response.authorization
     assert response.test?
   end
 
