@@ -2,7 +2,6 @@ require File.dirname(__FILE__) + '/../test_helper'
 
 class RemoteFirstPayTest < Test::Unit::TestCase
   
-
   def setup
     @gateway = FirstPayGateway.new(fixtures(:first_pay))
     
@@ -46,10 +45,7 @@ class RemoteFirstPayTest < Test::Unit::TestCase
   end
 
   def test_invalid_login
-    gateway = FirstPayGateway.new(
-                :login => '',
-                :password => ''
-              )
+    gateway = FirstPayGateway.new(:login => '', :password => '')
     assert response = gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
     assert_equal 'REPLACE WITH FAILURE MESSAGE', response.message

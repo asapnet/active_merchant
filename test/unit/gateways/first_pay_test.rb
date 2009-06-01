@@ -2,11 +2,8 @@ require File.dirname(__FILE__) + '/../../test_helper'
 
 class FirstPayTest < Test::Unit::TestCase
   def setup
-    @gateway = FirstPayGateway.new(
-                 :login => 'login',
-                 :password => 'password'
-               )
-
+    @gateway = FirstPayGateway.new(:login => 'login', :password => 'password')
+    
     @credit_card = credit_card
     @amount = 100
     
@@ -36,14 +33,19 @@ class FirstPayTest < Test::Unit::TestCase
     assert_failure response
     assert response.test?
   end
-
+  
+  
   private
   
   # Place raw successful response from gateway here
   def successful_purchase_response
+    # from API docs pg 16
+    "CAPTURED:199641568:NA:A:Dec 11 2003:278653:NLS:NLS:NLS:53147609:200312111612:NA:NA:NA:NA:NA"
   end
   
   # Place raw failed response from gateway here
   def failed_purcahse_response
+    # from API docs pg 16
+    "NOT CAPTURED:DECLINE:NA:NA:Dec 11 2003:278654:NLS:NLS:NLS:53147611:200312111612:NA:NA:NA:NA:NA:NA"
   end
 end
