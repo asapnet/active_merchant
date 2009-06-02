@@ -16,7 +16,7 @@ class FirstPayTest < Test::Unit::TestCase
     }
   end
   
-  def test_successful_purchase
+  def xtest_successful_purchase
     @gateway.expects(:ssl_post).returns(successful_purchase_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
@@ -27,11 +27,20 @@ class FirstPayTest < Test::Unit::TestCase
     assert response.test?
   end
 
-  def test_unsuccessful_request
+  def xtest_unsuccessful_request
     @gateway.expects(:ssl_post).returns(failed_purchase_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
+    assert response.test?
+  end
+  
+  def test_error_on_purchase_request
+    @gateway.expects(:ssl_post).returns(error_response)
+    
+    assert response = @gateway.purchase(@amount, @credit_card, @options)
+    assert ! response.success?
+    assert_equal('704-MISSING BASIC DATA TYPE:card, exp, zip, addr, member, amount', response.message)
     assert response.test?
   end
   
@@ -48,5 +57,9 @@ class FirstPayTest < Test::Unit::TestCase
   def failed_purcahse_response
     # from API docs pg 16
     "NOT CAPTURED:DECLINE:NA:NA:Dec 11 2003:278654:NLS:NLS:NLS:53147611:200312111612:NA:NA:NA:NA:NA:NA"
+  end
+  
+  def error_response
+    '!ERROR! 704-MISSING BASIC DATA TYPE:card, exp, zip, addr, member, amount'
   end
 end

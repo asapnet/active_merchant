@@ -50,8 +50,8 @@ module ActiveMerchant #:nodoc:
       def purchase(money, creditcard, options = {})
         post = {}
         add_invoice(post, options)
-        add_creditcard(post, creditcard)        
-        add_address(post, creditcard, options)   
+        add_creditcard(post, creditcard)
+        add_address(post, creditcard, options)
         add_customer_data(post, options)
         
         commit('sale', money, post)
@@ -71,7 +71,7 @@ module ActiveMerchant #:nodoc:
       
       def add_address(post, creditcard, options)
         if billing_address = options[:billing_address] || options[:address]
-          post[:addr]     = billing_address[:address1] + billing_address[:address2].to_s
+          post[:addr]     = billing_address[:address1] + ' ' + billing_address[:address2].to_s
           post[:city]     = billing_address[:city]
           post[:state]    = billing_address[:state]
           post[:zip]      = billing_address[:zip]                             
@@ -96,33 +96,44 @@ module ActiveMerchant #:nodoc:
         "#{month}#{year[-2..-1]}"
       end
       
-      def parse(body)
-        # PTODO - split on : or look for error
-        body
-      end     
-      
       def commit(action, money, post)
-        post[:amount] = amount(money)
+        response = parse( ssl_post(test? ? TEST_URL : LIVE_URL, post_data(action, post, money)) )
         
-        response = parse( ssl_post(test? ? TEST_URL : LIVE_URL, post_data(action, post)) )
+        Response.new(response[:response] == 'CAPTURED', response[:message], response,
+          :test => test?,
+          :authorization => response[:transactionid],
+          :avs_result => { :code => response[:avsresponse] },
+          :cvv_result => response[:cvvresponse])
+      end
+      
+      def parse(body)
+        response = {}
         
-        # PTODO - parse response
+        # check for an error first
+        if body.include?('!ERROR!')
+          response[:response] = 'ERROR'
+          response[:message] = error_message_from(body)
+        else
+          
+        end
         
-#        Response.new(response[:response].to_i == SUCCESS, message_from(response), response,
-#          :test => test?,
-#          :authorization => response[:transactionid],
-#          :avs_result => { :code => response[:avsresponse] },
-#          :cvv_result => response[:cvvresponse]
-#        )
+        return response
+      end
+      
+      def error_message_from(response)
+        # error messages use this format - '!ERROR! 704-MISSING BASIC DATA TYPE:card, exp, zip, addr, member, amount'
+        response.split("! ")[1]
       end
       
       def message_from(response)
+        
       end
       
-      def post_data(action, post)
+      def post_data(action, post, money)
         post[:username]   = @options[:login]  
         post[:password]   = @options[:password]
         post[:type]       = ACTIONS[action]
+        post[:amount]     = amount(money)
         
         post.to_s
       end
