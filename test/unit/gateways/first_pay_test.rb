@@ -16,22 +16,23 @@ class FirstPayTest < Test::Unit::TestCase
     }
   end
   
-  def xtest_successful_purchase
+  def test_successful_purchase
     @gateway.expects(:ssl_post).returns(successful_purchase_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_success response
     
     # Replace with authorization number from the successful response
-    assert_equal '199641568', response.authorization
+    assert_equal '056708', response.authorization
     assert response.test?
   end
 
-  def xtest_unsuccessful_request
+  def test_unsuccessful_request
     @gateway.expects(:ssl_post).returns(failed_purchase_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
+    assert_equal('DECLINE', response.message)
     assert response.test?
   end
   
@@ -47,15 +48,11 @@ class FirstPayTest < Test::Unit::TestCase
   
   private
   
-  # Place raw successful response from gateway here
   def successful_purchase_response
-    # from API docs pg 16
-    "CAPTURED:199641568:NA:A:Dec 11 2003:278653:NLS:NLS:NLS:53147609:200312111612:NA:NA:NA:NA:NA"
+    "CAPTURED:056708:NA:X:Jun 02 2009:241:NLS:NLS:NLS:57097598:9999:NA:NA:NA:NA:NA:NA:NA"
   end
   
-  # Place raw failed response from gateway here
-  def failed_purcahse_response
-    # from API docs pg 16
+  def failed_purchase_response
     "NOT CAPTURED:DECLINE:NA:NA:Dec 11 2003:278654:NLS:NLS:NLS:53147611:200312111612:NA:NA:NA:NA:NA:NA"
   end
   

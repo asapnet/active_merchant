@@ -98,10 +98,10 @@ module ActiveMerchant #:nodoc:
       
       def commit(action, money, post)
         response = parse( ssl_post(test? ? TEST_URL : LIVE_URL, post_data(action, post, money)) )
-        
+                
         Response.new(response[:response] == 'CAPTURED', response[:message], response,
           :test => test?,
-          :authorization => response[:transactionid],
+          :authorization => response[:authorization],
           :avs_result => { :code => response[:avsresponse] },
           :cvv_result => response[:cvvresponse])
       end
@@ -114,28 +114,40 @@ module ActiveMerchant #:nodoc:
           response[:response] = 'ERROR'
           response[:message] = error_message_from(body)
         else
+          # a capture / not captured response will be : delimited
+          split = body.split(':')
+          response[:response] = split[0]
           
+          # a CAPTURED response will have an auth number
+          # see pg 16 of docs
+          if response[:response] == 'CAPTURED'
+            response[:message] = 'CAPTURED'
+            response[:authorization] = split[1]
+            response[:transactionid] = split[9]
+            response[:avsresponse] = split[3]
+            response[:cvvresponse] = split[17]
+          else
+            # NOT CAPTURED response
+            response[:message] = split[1]
+            response[:transactionid] = split[9]
+          end
         end
         
         return response
       end
       
       def error_message_from(response)
-        # error messages use this format - '!ERROR! 704-MISSING BASIC DATA TYPE:card, exp, zip, addr, member, amount'
-        response.split("! ")[1]
-      end
-      
-      def message_from(response)
-        
+        # error messages use this format - '!ERROR! 704-MISSING BASIC DATA TYPE:card, exp, zip, addr, member, amount\n'
+        response.split("! ")[1].chomp
       end
       
       def post_data(action, post, money)
-        post[:username]   = @options[:login]  
+        post[:vid]        = @options[:login]  
         post[:password]   = @options[:password]
         post[:type]       = ACTIONS[action]
         post[:amount]     = amount(money)
         
-        post.to_s
+        return post.collect { |key, value| "#{key}=#{CGI.escape(value.to_s)}" unless value.nil? }.join("&")
       end
     end
   end

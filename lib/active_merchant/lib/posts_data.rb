@@ -1,3 +1,5 @@
+require 'ruby-debug'
+
 module ActiveMerchant #:nodoc:
   module PostsData  #:nodoc:
 
@@ -23,6 +25,7 @@ module ActiveMerchant #:nodoc:
     end
     
     def ssl_post(endpoint, data, headers = {})
+      debugger
       ssl_request(:post, endpoint, data, headers)
     end
     
