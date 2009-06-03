@@ -6,13 +6,13 @@ class RemoteFirstPayTest < Test::Unit::TestCase
     @gateway = FirstPayGateway.new(:login => '38-1000', :password => '80350243')
     
     @amount = 100
-    @credit_card = credit_card('4000100011112224')
+    @credit_card = credit_card('4111111111111111', {:first_name => 'Test', :last_name => 'Person'})
     @declined_card = credit_card('4000300011112220')
     
     @options = { 
       :order_id => '1',
-      :billing_address => address,
-      :description => 'Store Purchase'
+      :billing_address => address({:name => 'Test Person', :city => 'New York', :state => 'NY', :zip => '10002', :country => 'US'}),
+      :description => 'Test Purchase'
     }
   end
   
@@ -44,7 +44,7 @@ class RemoteFirstPayTest < Test::Unit::TestCase
 #    assert_equal 'REPLACE WITH GATEWAY FAILURE MESSAGE', response.message
 #  end
 
-  def test_invalid_login
+  def xtest_invalid_login
     gateway = FirstPayGateway.new(:login => '', :password => '')
     assert response = gateway.purchase(@amount, @credit_card, @options)
     assert_failure response

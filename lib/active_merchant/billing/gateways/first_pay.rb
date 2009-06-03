@@ -1,6 +1,14 @@
+require 'ruby-debug'
+
 module ActiveMerchant #:nodoc:
-  module Billing #:nodoc:
+  module Billing #:nodoc:    
     class FirstPayGateway < Gateway
+      class FirstPayPostData < PostData
+        # Fields that will be sent even if they are blank
+        # self.required_fields = [ :amount, :type, :ccnumber, :ccexp, :firstname, :lastname,
+        #  :company, :address1, :address2, :city, :state, :zip, :country, :phone ]   
+      end
+
       # both URLs are IP restricted
       TEST_URL = 'https://apgcert.first-pay.com/AcqENGIN/SecureCapture'
       LIVE_URL = 'https://acqengin.first-pay.com/AcqENGIN/SecureCapture'
@@ -48,7 +56,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def purchase(money, creditcard, options = {})
-        post = {}
+        post = FirstPayPostData.new
         add_invoice(post, options)
         add_creditcard(post, creditcard)
         add_address(post, creditcard, options)
@@ -147,7 +155,7 @@ module ActiveMerchant #:nodoc:
         post[:type]       = ACTIONS[action]
         post[:amount]     = amount(money)
         
-        return post.collect { |key, value| "#{key}=#{CGI.escape(value.to_s)}" unless value.nil? }.join("&")
+        return post.to_post_data
       end
     end
   end
