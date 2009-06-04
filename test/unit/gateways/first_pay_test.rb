@@ -69,6 +69,26 @@ class FirstPayTest < Test::Unit::TestCase
     assert response.test?
   end
   
+  def test_successful_void
+    @gateway.expects(:ssl_post).returns(successful_void_response)
+    
+    assert response = @gateway.void(@amount, '123456', @options)
+    assert_success response
+    
+    # Replace with authorization number from the successful response
+    assert_equal '000000', response.authorization
+    assert response.test?        
+  end
+  
+  def test_failed_void
+    @gateway.expects(:ssl_post).returns(failed_void_response)
+    
+    assert response = @gateway.void(@amount, '123456', @options)
+    assert_failure response
+    assert_equal('MISSING PARENT TRANSACTION', response.message)
+    assert response.test?    
+  end
+  
   
   private
   
@@ -87,6 +107,14 @@ class FirstPayTest < Test::Unit::TestCase
   
   def failed_credit_response
     "NOT CAPTURED:CARD NO. ERROR:NA:NA:Dec 11 2003:278614:NLS:NLS:NLS:53147499:200311251526:NA:NA:NA:NA:NA"
+  end
+  
+  def successful_void_response
+    "CAPTURED:000000:NA:Y:Dec 11 2003:278659:NLS:NLS:NLS:53147623:200312111628:NA:NA:NA:NA:NA"
+  end
+  
+  def failed_void_response
+    "NOT CAPTURED:MISSING PARENT TRANSACTION:NA:NA:Dec 11 2003:278644:NLS:NLS:NLS:53147562:200311251526:NA:NA:NA:NA:NA"
   end
   
   def error_response

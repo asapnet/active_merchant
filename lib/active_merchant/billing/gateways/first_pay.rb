@@ -27,12 +27,8 @@ module ActiveMerchant #:nodoc:
       
       ACTIONS = {
         'sale' => 1,
-        'credit' => 2
-
-#        :authorization => 'auth',
-#        :capture => 'capture',
-#        :void => 'void',
-#        :refund => 'refund'
+        'credit' => 2,
+        'void' => 3
       }
       
       def initialize(options = {})
@@ -60,6 +56,18 @@ module ActiveMerchant #:nodoc:
         add_credit_data(post, options)
         
         commit('credit', money, post)
+      end
+      
+      def void(money, transactionid, options = {})
+        
+        # PTODO - is creditcard required?
+        
+        post = FirstPayPostData.new
+        add_void_data(post, transactionid, options)
+        add_invoice(post, options)
+        add_customer_data(post, options)
+        
+        commit('void', money, post)
       end
       
       
@@ -100,6 +108,10 @@ module ActiveMerchant #:nodoc:
       def add_credit_data(post, options)
         post[:transid] = options[:transactionid]
         post[:ref] = options[:authorization]
+      end
+      
+      def add_void_data(post, transactionid, options)
+        post[:transid] = transactionid
       end
       
       def commit(action, money, post)
