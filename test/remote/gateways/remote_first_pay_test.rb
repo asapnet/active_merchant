@@ -62,27 +62,23 @@ class RemoteFirstPayTest < Test::Unit::TestCase
     assert_failure response
     assert_equal("51-INSUFFICIENT FUNDS", response.message)
   end
-
-#  def test_authorize_and_capture
-#    amount = @amount
-#    assert auth = @gateway.authorize(amount, @credit_card, @options)
-#    assert_success auth
-#    assert_equal 'Success', auth.message
-#    assert auth.authorization
-#    assert capture = @gateway.capture(amount, auth.authorization)
-#    assert_success capture
-#  end
-
-#  def test_failed_capture
-#    assert response = @gateway.capture(@amount, '')
-#    assert_failure response
-#    assert_equal 'REPLACE WITH GATEWAY FAILURE MESSAGE', response.message
-#  end
-
+  
   def test_invalid_login
     gateway = FirstPayGateway.new(:login => '', :password => '')
     assert response = gateway.purchase(@amount, @credit_card, @options)
     assert_failure response
     assert_equal '703-INVALID VENDOR ID AND PASS CODE', response.message
   end
+  
+  def test_successful_credit
+    # purchase first
+    assert response = @gateway.purchase(@amount, @credit_card, @options)
+    assert_success response
+    assert_equal('CAPTURED', response.message)
+    assert_not_nil(response.transactionid)
+    assert_not_nil(response.authorization)
+    
+    
+  end
+  
 end
