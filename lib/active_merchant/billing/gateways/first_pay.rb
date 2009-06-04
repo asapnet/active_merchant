@@ -152,7 +152,7 @@ module ActiveMerchant #:nodoc:
       def post_data(action, post, money)
         post[:vid]        = @options[:login]  
         post[:password]   = @options[:password]
-        post[:type]       = ACTIONS[action]
+        post[:action]       = ACTIONS[action]
         post[:amount]     = amount(money)
         
         return post.to_post_data
