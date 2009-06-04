@@ -1,12 +1,9 @@
-require 'ruby-debug'
-
 module ActiveMerchant #:nodoc:
   module Billing #:nodoc:    
     class FirstPayGateway < Gateway
       class FirstPayPostData < PostData
         # Fields that will be sent even if they are blank
-        # self.required_fields = [ :amount, :type, :ccnumber, :ccexp, :firstname, :lastname,
-        #  :company, :address1, :address2, :city, :state, :zip, :country, :phone ]   
+        self.required_fields = [ :action, :amount, :trackid ]   
       end
 
       # both URLs are IP restricted
@@ -29,13 +26,12 @@ module ActiveMerchant #:nodoc:
       self.money_format = :cents
       
       ACTIONS = {
-        'sale' => 1
+        'sale' => 1,
+        'credit' => 2
 
 #        :authorization => 'auth',
-#        :purchase => 'sale',
 #        :capture => 'capture',
 #        :void => 'void',
-#        :credit => 'credit',
 #        :refund => 'refund'
       }
       
@@ -44,16 +40,6 @@ module ActiveMerchant #:nodoc:
         @options = options
         super
       end  
-      
-      def authorize(money, creditcard, options = {})
-        post = {}
-        add_invoice(post, options)
-        add_creditcard(post, creditcard)        
-        add_address(post, creditcard, options)        
-        add_customer_data(post, options)
-        
-        commit('authonly', money, post)
-      end
       
       def purchase(money, creditcard, options = {})
         post = FirstPayPostData.new
@@ -64,9 +50,16 @@ module ActiveMerchant #:nodoc:
         
         commit('sale', money, post)
       end                       
-    
-      def capture(money, authorization, options = {})
-        commit('capture', money, post)
+      
+      def credit(money, creditcard, options = {})
+        post = FirstPayPostData.new
+        add_invoice(post, options)
+        add_creditcard(post, creditcard)
+        add_address(post, creditcard, options)
+        add_customer_data(post, options)
+        add_credit_data(post, options)
+        
+        commit('credit', money, post)
       end
       
       
@@ -102,6 +95,11 @@ module ActiveMerchant #:nodoc:
         month = sprintf("%.2i", credit_card.month)
 
         "#{month}#{year[-2..-1]}"
+      end
+      
+      def add_credit_data(post, options)
+        post[:transid] = options[:transactionid]
+        post[:ref] = options[:authorization]
       end
       
       def commit(action, money, post)
@@ -152,7 +150,7 @@ module ActiveMerchant #:nodoc:
       def post_data(action, post, money)
         post[:vid]        = @options[:login]  
         post[:password]   = @options[:password]
-        post[:action]       = ACTIONS[action]
+        post[:action]     = ACTIONS[action]
         post[:amount]     = amount(money)
         
         return post.to_post_data

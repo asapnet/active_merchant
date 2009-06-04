@@ -27,7 +27,7 @@ class FirstPayTest < Test::Unit::TestCase
     assert response.test?
   end
 
-  def test_unsuccessful_request
+  def test_failed_purchase
     @gateway.expects(:ssl_post).returns(failed_purchase_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
@@ -36,12 +36,36 @@ class FirstPayTest < Test::Unit::TestCase
     assert response.test?
   end
   
-  def test_error_on_purchase_request
+  def test_error_on_purchase
     @gateway.expects(:ssl_post).returns(error_response)
     
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert ! response.success?
     assert_equal('704-MISSING BASIC DATA TYPE:card, exp, zip, addr, member, amount', response.message)
+    assert response.test?
+  end
+  
+  def test_successful_credit
+    @gateway.expects(:ssl_post).returns(successful_credit_response)
+    @options[:transactionid] = '123456'
+    @options[:authorization] = '7890'
+    
+    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert_success response
+    
+    # Replace with authorization number from the successful response
+    assert_equal '945101216', response.authorization
+    assert response.test?    
+  end
+  
+  def test_failed_credit
+    @gateway.expects(:ssl_post).returns(failed_credit_response)
+    @options[:transactionid] = '123456'
+    @options[:authorization] = '7890'
+    
+    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert_failure response
+    assert_equal('CARD NO. ERROR', response.message)
     assert response.test?
   end
   
@@ -54,6 +78,15 @@ class FirstPayTest < Test::Unit::TestCase
   
   def failed_purchase_response
     "NOT CAPTURED:DECLINE:NA:NA:Dec 11 2003:278654:NLS:NLS:NLS:53147611:200312111612:NA:NA:NA:NA:NA:NA"
+  end
+  
+  def successful_credit_response
+    # pg 17 docs
+    "CAPTURED:945101216:199641568:NA:Dec 11 2003:278655:NLS:NLSNLS:53147613:200312111613:NA:NA:NA:NA:NA"
+  end
+  
+  def failed_credit_response
+    "NOT CAPTURED:CARD NO. ERROR:NA:NA:Dec 11 2003:278614:NLS:NLS:NLS:53147499:200311251526:NA:NA:NA:NA:NA"
   end
   
   def error_response
