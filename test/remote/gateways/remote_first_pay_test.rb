@@ -1,5 +1,7 @@
 require File.dirname(__FILE__) + '/../../test_helper'
 
+require 'ruby-debug'
+
 # TIMEOUT
 # If the amount is 7.18
 #       Simulator will sleep for 31 seconds causing a timeout
@@ -75,10 +77,40 @@ class RemoteFirstPayTest < Test::Unit::TestCase
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_success response
     assert_equal('CAPTURED', response.message)
-    assert_not_nil(response.transactionid)
+    assert_not_nil(response.params["transactionid"])
     assert_not_nil(response.authorization)
     
+    @options[:transactionid] = response.params["transactionid"]
+    @options[:authorization] = response.authorization
     
+    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert_success response
+    assert_not_nil(response.authorization)
+  end
+  
+  def test_failed_credit
+    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert_failure response
+    assert_nil(response.authorization)
+    assert_equal('PARENT TRANSACTION NOT FOUND', response.message)
+  end
+  
+  def test_successful_void
+    # purchase first
+    assert response = @gateway.purchase(@amount, @credit_card, @options)
+    assert_success response
+    assert_equal('CAPTURED', response.message)
+    assert_not_nil(response.params["transactionid"])
+    assert_not_nil(response.authorization)
+    
+    assert_success response
+    assert_not_nil(response.authorization)
+  end
+  
+  def test_failed_void    
+    assert response = @gateway.void(@amount, @credit_card, @options)
+    assert_failure response
+    assert_equal('PARENT TRANSACTION NOT FOUND', response.message)
   end
   
 end
