@@ -74,7 +74,6 @@ class FirstPayTest < Test::Unit::TestCase
     assert response = @gateway.void(@amount, @credit_card, @options)
     assert_success response
     
-    # PTODO - Replace with authorization number from the successful response
     assert_equal '000000', response.authorization
     assert response.test?        
   end

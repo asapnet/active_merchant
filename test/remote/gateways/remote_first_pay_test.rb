@@ -1,44 +1,8 @@
 require File.dirname(__FILE__) + '/../../test_helper'
 
-require 'ruby-debug'
-
-# TIMEOUT
-# If the amount is 7.18
-#       Simulator will sleep for 31 seconds causing a timeout
-#  
-# RESPONSE CODE
-# CVV = 321
-#        N7 - DECLINE FOR CVV2 FAILURE
-# Amount > 500.00
-#        51 - INSUFFICIENT FUNDS
-# else
-#        00
-#  
-# CVV RESPONSE      
-# CVV = 123
-#       N
-# CVV < 200
-#       M
-# CVV < 400
-#       N
-# CVV < 600
-#       P
-# CVV < 800
-#       S
-# ELSE
-#       U
-#  
-# AVS RESPONSE
-# zip = 12345
-#       N
-# ELSE
-#       X
-# 
-
 class RemoteFirstPayTest < Test::Unit::TestCase
   def setup
-    # PTODO - clear credentials
-    @gateway = FirstPayGateway.new(:login => '38-1000', :password => '80350243')
+    @gateway = FirstPayGateway.new(:login => '', :password => '')
     
     @amount = 100
     @credit_card = credit_card('4111111111111111', {:first_name => 'Test', :last_name => 'Person'})
