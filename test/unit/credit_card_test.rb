@@ -159,6 +159,13 @@ class CreditCardTest < Test::Unit::TestCase
     assert_valid @solo
   end
 
+  def test_should_coerce_month_and_year_to_integers
+    @visa.month = '2'
+    @visa.year = '2007'
+    assert_kind_of Integer, @visa.month
+    assert_kind_of Integer, @visa.year
+  end
+
   def test_should_identify_wrong_cardtype
     c = credit_card(:type => 'master')
     assert_not_valid c

@@ -53,6 +53,14 @@ module ActiveMerchant #:nodoc:
       # run validation on the passed in value if it is supplied
       attr_accessor :verification_value
 
+      def month=(exp_month)
+        @month = exp_month.to_i
+      end
+
+      def year=(exp_year)
+        @year = exp_year.to_i
+      end
+
       # Provides proxy access to an expiry date object
       def expiry_date
         ExpiryDate.new(@month, @year)
