@@ -78,7 +78,7 @@ module ActiveMerchant #:nodoc:
       
       def add_address(post, creditcard, options)
         if billing_address = options[:billing_address] || options[:address]
-          post[:addr]     = billing_address[:address1] + ' ' + billing_address[:address2].to_s
+          post[:addr]     = billing_address[:address1].to_s + ' ' + billing_address[:address2].to_s
           post[:city]     = billing_address[:city]
           post[:state]    = billing_address[:state]
           post[:zip]      = billing_address[:zip]                             
@@ -91,7 +91,7 @@ module ActiveMerchant #:nodoc:
       end
       
       def add_creditcard(post, creditcard)
-        post[:member] = creditcard.first_name + " " + creditcard.last_name
+        post[:member] = creditcard.first_name.to_s + " " + creditcard.last_name.to_s
         post[:card] = creditcard.number
         post[:exp] = expdate(creditcard)
       end
