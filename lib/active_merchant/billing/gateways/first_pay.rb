@@ -14,7 +14,7 @@ module ActiveMerchant #:nodoc:
       self.supported_countries = ['US']
       
       # The card types supported by the payment gateway
-      self.supported_cardtypes = [:visa, :master, :american_express, :discover]
+      self.supported_cardtypes = [:visa, :master]
       
       # The homepage URL of the gateway
       self.homepage_url = 'http://www.first-pay.com'
@@ -41,21 +41,27 @@ module ActiveMerchant #:nodoc:
         post = FirstPayPostData.new
         add_invoice(post, options)
         add_creditcard(post, creditcard)
-        add_address(post, creditcard, options)
+        add_address(post, options)
         add_customer_data(post, options)
         
         commit('sale', money, post)
       end                       
       
-      def credit(money, creditcard, options = {})
-        post = FirstPayPostData.new
-        add_invoice(post, options)
-        add_creditcard(post, creditcard)
-        add_address(post, creditcard, options)
-        add_customer_data(post, options)
-        add_credit_data(post, options)
+      def credit(money, creditcard_or_transaction_id, options = {})
+        # unlinked credits are not supported. need both a creditcard and transactionid
+        # some calls to credit will pass only a CreditCard object and leave options blank attempting an unlinked refund
+        if creditcard_or_transaction_id.is_a?(ActiveMerchant::Billing::CreditCard) || options[:card].nil?
+          raise "Both TransactionID and CreditCard are required"
+        else        
+          post = FirstPayPostData.new
+          add_invoice(post, options)
+          add_creditcard(post, options[:card])
+          add_address(post, options)
+          add_customer_data(post, options)
+          add_credit_data(post, creditcard_or_transaction_id)
         
-        commit('credit', money, post)
+          commit('credit', money, post)
+        end
       end
       
       def void(money, creditcard, options = {})
@@ -76,7 +82,7 @@ module ActiveMerchant #:nodoc:
         post[:email] = options[:email]
       end
       
-      def add_address(post, creditcard, options)
+      def add_address(post, options)
         if billing_address = options[:billing_address] || options[:address]
           post[:addr]     = billing_address[:address1].to_s + ' ' + billing_address[:address2].to_s
           post[:city]     = billing_address[:city]
@@ -105,7 +111,6 @@ module ActiveMerchant #:nodoc:
       
       def add_credit_data(post, options)
         post[:transid] = options[:transactionid]
-        post[:ref] = options[:authorization]
       end
       
       def add_void_data(post, options)
@@ -134,12 +139,12 @@ module ActiveMerchant #:nodoc:
           split = body.split(':')
           response[:response] = split[0]
           
-          # a CAPTURED response will have an auth number
-          # see pg 16 of docs
+          # FirstPay docs are worthless. turns out the transactionid is required for credits
+          # so we need to store that in authorization, not the actual auth.
           if response[:response] == 'CAPTURED'
             response[:message] = 'CAPTURED'
-            response[:authorization] = split[1]
-            response[:transactionid] = split[9]
+            response[:authorization] = split[9] # actually the transactionid
+            response[:auth] = split[1]
             response[:avsresponse] = split[3]
             response[:cvvresponse] = split[17]
           else
