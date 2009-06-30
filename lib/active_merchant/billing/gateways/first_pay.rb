@@ -109,8 +109,8 @@ module ActiveMerchant #:nodoc:
         "#{month}#{year[-2..-1]}"
       end
       
-      def add_credit_data(post, options)
-        post[:transid] = options[:transactionid]
+      def add_credit_data(post, transaction_id)
+        post[:transid] = transaction_id
       end
       
       def add_void_data(post, options)
