@@ -41,22 +41,29 @@ class RemoteFirstPayTest < Test::Unit::TestCase
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_success response
     assert_equal('CAPTURED', response.message)
-    assert_not_nil(response.params["transactionid"])
+    assert_not_nil(response.params["auth"])
     assert_not_nil(response.authorization)
     
-    @options[:transactionid] = response.params["transactionid"]
-    @options[:authorization] = response.authorization
+    @options[:card] = @credit_card
     
-    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert response = @gateway.credit(@amount, response.authorization, @options)
     assert_success response
     assert_not_nil(response.authorization)
   end
   
   def test_failed_credit
-    assert response = @gateway.credit(@amount, @credit_card, @options)
+    @options[:card] = @credit_card
+    
+    assert response = @gateway.credit(@amount, '000000', @options)
     assert_failure response
     assert_nil(response.authorization)
     assert_equal('PARENT TRANSACTION NOT FOUND', response.message)
+  end
+  
+  def test_failed_unlinked_credit
+    assert_raise RuntimeError do
+      @gateway.credit(@amount, @credit_card)
+    end
   end
   
   def test_successful_void
@@ -64,7 +71,7 @@ class RemoteFirstPayTest < Test::Unit::TestCase
     assert response = @gateway.purchase(@amount, @credit_card, @options)
     assert_success response
     assert_equal('CAPTURED', response.message)
-    assert_not_nil(response.params["transactionid"])
+    assert_not_nil(response.params["auth"])
     assert_not_nil(response.authorization)
     
     assert_success response

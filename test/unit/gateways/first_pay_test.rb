@@ -23,7 +23,7 @@ class FirstPayTest < Test::Unit::TestCase
     assert_success response
     
     # Replace with authorization number from the successful response
-    assert_equal '056708', response.authorization
+    assert_equal '57097598', response.authorization
     assert response.test?
   end
 
@@ -47,24 +47,29 @@ class FirstPayTest < Test::Unit::TestCase
   
   def test_successful_credit
     @gateway.expects(:ssl_post).returns(successful_credit_response)
-    @options[:transactionid] = '123456'
-    @options[:authorization] = '7890'
+    @options[:card] = @credit_card
     
-    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert response = @gateway.credit(@amount, '123456', @options)
     assert_success response
     
-    # Replace with authorization number from the successful response
-    assert_equal '945101216', response.authorization
+    assert_equal '53147613', response.authorization
     assert response.test?    
   end
   
   def test_failed_credit
+    @options[:card] = @credit_card
     @gateway.expects(:ssl_post).returns(failed_credit_response)
     
-    assert response = @gateway.credit(@amount, @credit_card, @options)
+    assert response = @gateway.credit(@amount, '123456', @options)
     assert_failure response
     assert_equal('PARENT TRANSACTION NOT FOUND', response.message)
     assert response.test?
+  end
+  
+  def test_failed_unlinked_credit
+    assert_raise RuntimeError do
+      @gateway.credit(@amount, @credit_card)
+    end
   end
   
   def test_successful_void
@@ -74,7 +79,7 @@ class FirstPayTest < Test::Unit::TestCase
     assert response = @gateway.void(@amount, @credit_card, @options)
     assert_success response
     
-    assert_equal '000000', response.authorization
+    assert_equal '53147623', response.authorization
     assert response.test?        
   end
   
@@ -99,8 +104,7 @@ class FirstPayTest < Test::Unit::TestCase
   end
   
   def successful_credit_response
-    # pg 17 docs
-    "CAPTURED:945101216:199641568:NA:Dec 11 2003:278655:NLS:NLSNLS:53147613:200312111613:NA:NA:NA:NA:NA"
+    "CAPTURED:945101216:199641568:NA:Dec 11 2003:278655:NLS:NLS:NLS:53147613:200312111613:NA:NA:NA:NA:NA"
   end
   
   def failed_credit_response
