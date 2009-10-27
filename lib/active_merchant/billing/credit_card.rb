@@ -111,17 +111,6 @@ module ActiveMerchant #:nodoc:
         validate_switch_or_solo_attributes
       end
 
-      def validate_for_referral_customer
-        validate_essential_attributes
-
-        # Bogus card is pretty much for testing purposes. Lets just skip these extra tests if its used
-        return if type == 'bogus'
-
-        validate_card_type
-        validate_card_number
-        validate_switch_or_solo_attributes
-      end
-      
       def self.requires_verification_value?
         require_verification_value
       end
